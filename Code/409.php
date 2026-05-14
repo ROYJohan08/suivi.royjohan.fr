@@ -1,3 +1,53 @@
+<?php
+	require_once("SOURCES/function.php");
+    $Database =  new PDO("mysql:host=localhost;dbname=cms;charset=utf8mb4", "root", "", [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,PDO::ATTR_EMULATE_PREPARES => false]);
+	if(!admin::checkToken()){
+		header("Location: 400.php");
+		exit;
+	}
+	if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['supprimer'])) {
+		$id = trim($_POST["id"] ?? "");
+		$file = trim($_POST["file"] ?? "");
+		if(!$id || !$file){Error::add("Id ou file non remplis",ErrorLevel::ERROR);}
+		intervention::delFile($id,$file);
+		$raw = intervention::get($Database,"",$id);
+	}
+	if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['save'])) {
+		$id = trim($_POST["id"] ?? "");
+		$id = intervention::save($Database,$_POST);
+		$raw = intervention::get($Database,"",$id);
+	}
+	if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['search'])) {
+		$code = trim($_POST["id"] ?? "");
+		if(!$code){Errors::add("Recherche non remplis",ErrorLevel::ERROR);$raw=null;}
+		$code = str_replace(" ","",str_replace(".","",$code));
+		if(strlen($code)==10){
+			$raw = intervention::get($Database,$code);
+		}
+		else{
+			$raw = intervention::get($Database,"",$code);
+		}
+	}
+	if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['uploadDoc']) && !empty($_POST['id']) && !empty($_FILES['document'])) {
+		$id = intval($_POST['id']);
+		$file = $_FILES['document'];
+		if ($file['error'] !== UPLOAD_ERR_OK) {
+			Errors::add("Erreur lors de l'upload", ErrorLevel::ERROR);
+		}
+		else {
+			$filename = basename($file['name']);
+			$folder = __DIR__ . "/SOURCES/Docs/" . $id;
+			if (!is_dir($folder)) {
+				mkdir($folder, 0775, true);
+			}
+			$target = $folder . "/" . $filename;
+			if (move_uploaded_file($file['tmp_name'], $target)) {Errors::add("Document uploadé avec succès", ErrorLevel::SUCCESS);}
+			else {Errors::add("Impossible de sauvegarder le fichier", ErrorLevel::ERROR);}
+			$raw = intervention::get($Database,"",$id);
+		}
+	}
+	$errorMessage = Errors::get(ErrorLevel::ERROR);
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -5,295 +55,180 @@
     <title>Dashboard Admin - ROYJohanInfo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-
-    <style>
-        :root {
-            --bg-color: #121212;
-            --card-color: #1E1E1E;
-            --accent-color: #03DAC6;
-            --accent-soft: rgba(3, 218, 198, 0.2);
-            --text-primary: #FFFFFF;
-            --text-secondary: #B3B3B3;
-            --divider-color: #2C2C2C;
-            --error-color: #CF6679;
-            --radius: 12px;
-            --shadow-soft: 0 4px 12px rgba(0,0,0,0.4);
-        }
-
-        * { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Roboto', sans-serif;
-            background: radial-gradient(circle at top, #1F1F1F 0, #000 60%);
-            color: var(--text-primary);
-        }
-
-        .page-wrapper {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 24px 16px 40px;
-        }
-
-        header {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        header img {
-            height: 60px;
-            border-radius: 8px;
-            box-shadow: var(--shadow-soft);
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 1.8rem;
-        }
-
-        .card {
-            background: var(--card-color);
-            border-radius: var(--radius);
-            padding: 20px;
-            box-shadow: var(--shadow-soft);
-            border: 1px solid var(--divider-color);
-        }
-
-        .card h2 {
-            margin-top: 0;
-            margin-bottom: 14px;
-            font-size: 1.1rem;
-        }
-
-        /* Contenu centré dans chaque tuile */
-        .card-content {
-            max-width: 420px;
-            margin: 0 auto;
-        }
-
-        /* Pour la tuile de recherche, un peu plus large */
-        .card-content.search {
-            max-width: 700px;
-        }
-
-        .full {
-            grid-column: 1 / -1;
-        }
-
-        .grid-4 {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-        }
-
-        @media (max-width: 1100px) {
-            .grid-4 {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 650px) {
-            .grid-4 {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .input-group {
-            margin-bottom: 14px;
-        }
-
-        .input-group label {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        .input-group input,
-        .input-group textarea,
-        .input-group select {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #333;
-            background: #1A1A1A;
-            color: white;
-            margin-top: 4px;
-        }
-
-        .btn {
-            padding: 10px 16px;
-            border-radius: 8px;
-            background: var(--accent-color);
-            color: black;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: 0.2s;
-            display: inline-block;
-        }
-
-        .btn:hover {
-            background: #00bfa5;
-            transform: translateY(-1px);
-        }
-
-        .btn-row {
-            margin-top: 8px;
-            text-align: right;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #333;
-            background: #1A1A1A;
-            color: white;
-            font-size: 1rem;
-        }
-
-        .doc-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px;
-            background: #252525;
-            border-radius: 8px;
-            border: 1px solid #333;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-
-        .doc-item button {
-            background: var(--error-color);
-            border: none;
-            padding: 6px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            color: white;
-            font-size: 0.8rem;
-        }
-    </style>
+	<link href="SOURCES/style.css" rel="stylesheet">
 </head>
-
 <body>
 <div class="page-wrapper">
-
-    <!-- HEADER -->
     <header>
-        <img src="https://lh3.googleusercontent.com/p/AF1QipPkld8Cg3_GuIjRTeyXdn_o3wLVNIxxXWm_4f2P=w244-h245-n-k-no-nu" alt="Logo">
+        <img src="SOURCES/icon.png" alt="Logo">
         <div>
             <h1>Dashboard Administrateur</h1>
             <span style="color:var(--text-secondary)">Gestion complète des interventions</span>
         </div>
     </header>
-
-    <!-- GRID PRINCIPALE -->
     <div class="grid-4">
-
-        <!-- TUILE 1 — FULL WIDTH (RECHERCHE) -->
         <section class="card full">
-            <div class="card-content search">
+            <form method="POST" class="card-content search">
                 <h2>Rechercher une intervention</h2>
                 <div class="input-group">
                     <label>Recherche</label>
-                    <input class="search-input" placeholder="Nom, téléphone, série, modèle...">
+                    <input class="search-input" name="id" placeholder="Id ou téléphone">
                 </div>
                 <div class="btn-row">
-                    <button class="btn">Rechercher</button>
+                    <input type="submit" name="search" value="Rechercher" class="btn">
                 </div>
-            </div>
+            </form>
         </section>
+		<form id="interventionForm" style="display: none;" method="POST"></form>
+		<section class="card">
+			<div class="card-content">
+				<h2>Client<?= isset($raw['id']) ? " : ".ShortID::encode((int) htmlspecialchars($raw['id'], ENT_QUOTES, 'UTF-8')) : '' ?></h2>
+				<input type="hidden" name="id" form="interventionForm" value="<?= isset($raw['id']) ? htmlspecialchars($raw['id'], ENT_QUOTES, 'UTF-8') : '' ?>">
+				<div class="input-group"><label>Nom</label><input type="text" name="nom" form="interventionForm" value="<?= isset($raw['nom']) ? htmlspecialchars($raw['nom'], ENT_QUOTES, 'UTF-8') : '' ?>"></div>
+				<div class="input-group"><label>Prénom</label><input type="text" name="prenom" form="interventionForm" value="<?= isset($raw['prenom']) ? htmlspecialchars($raw['prenom'], ENT_QUOTES, 'UTF-8') : '' ?>"></div>
+				<div class="input-group"><label>Adresse</label><input type="text" name="adresse" form="interventionForm" value="<?= isset($raw['adresse']) ? htmlspecialchars($raw['adresse'], ENT_QUOTES, 'UTF-8') : '' ?>"></div>
+				<div class="input-group"><label>Téléphone</label><input type="text" name="telephone" form="interventionForm" value="<?= isset($raw['telephone']) ? htmlspecialchars($raw['telephone'], ENT_QUOTES, 'UTF-8') : '' ?>"></div>
+				<div class="input-group"><label>Email</label><input type="text" name="email" form="interventionForm" value="<?= isset($raw['email']) ? htmlspecialchars($raw['email'], ENT_QUOTES, 'UTF-8') : '' ?>"></div>
+			</div>
+		</section>
+		<section class="card">
+			<div class="card-content">
+				<h2>Appareil</h2>
 
-        <!-- TUILE 2 — CLIENT -->
-        <section class="card">
-            <div class="card-content">
-                <h2>Client</h2>
+				<div class="input-group"><label>Type d'appareil</label><input name="type" type="text" form="interventionForm" value="<?= isset($raw['type']) ? htmlspecialchars($raw['type'], ENT_QUOTES, 'UTF-8') : '' ?>"></div>
+				<div class="input-group"><label>Marque</label><input type="text" name="marque" form="interventionForm" value="<?= isset($raw['marque']) ? htmlspecialchars($raw['marque'], ENT_QUOTES, 'UTF-8') : '' ?>"></div>
+				<div class="input-group"><label>Modèle</label><input type="text" name="modele" form="interventionForm" value="<?= isset($raw['modele']) ? htmlspecialchars($raw['modele'], ENT_QUOTES, 'UTF-8') : '' ?>"></div>
+				<div class="input-group"><label>Couleur</label><input type="text" name="couleur" form="interventionForm" value="<?= isset($raw['couleur']) ? htmlspecialchars($raw['couleur'], ENT_QUOTES, 'UTF-8') : '' ?>"></div>
+				<div class="input-group"><label>Série</label><input type="text" name="serie" form="interventionForm" value="<?= isset($raw['serie']) ? htmlspecialchars($raw['serie'], ENT_QUOTES, 'UTF-8') : '' ?>"></div>
+				<div class="input-group"><label>Série 2</label><input type="text" name="serie2" form="interventionForm" value="<?= isset($raw['serie2']) ? htmlspecialchars($raw['serie2'], ENT_QUOTES, 'UTF-8') : '' ?>"></div>
+			</div>
+		</section>
+		<section class="card">
+			<div class="card-content">
+				<h2>Intervention</h2>
 
-                <div class="input-group"><label>Nom</label><input type="text"></div>
-                <div class="input-group"><label>Prénom</label><input type="text"></div>
-                <div class="input-group"><label>Adresse</label><input type="text"></div>
-                <div class="input-group"><label>Téléphone</label><input type="text"></div>
-                <div class="input-group"><label>Email</label><input type="text"></div>
-            </div>
-        </section>
+				<div class="input-group"><label>Type d'intervention</label><input type="text" name="typeIntervention" form="interventionForm" value="<?= isset($raw['typeIntervention']) ? htmlspecialchars($raw['typeIntervention'], ENT_QUOTES, 'UTF-8') : '' ?>"></div>
 
-        <!-- TUILE 3 — APPAREIL -->
-        <section class="card">
-            <div class="card-content">
-                <h2>Appareil</h2>
+				<div class="input-group">
+					<label>Statut</label>
+					<select form="interventionForm"  name="statut">
+						<option>Attente réponse devis</option>
+						<option>En cours</option>
+						<option>Terminé</option>
+					</select>
+				</div>
 
-                <div class="input-group"><label>Type d'appareil</label><input type="text"></div>
-                <div class="input-group"><label>Marque</label><input type="text"></div>
-                <div class="input-group"><label>Modèle</label><input type="text"></div>
-                <div class="input-group"><label>Couleur</label><input type="text"></div>
-                <div class="input-group"><label>Série</label><input type="text"></div>
-                <div class="input-group"><label>Série 2</label><input type="text"></div>
-            </div>
-        </section>
+				<div class="input-group">
+					<label>Avancement (%)</label>
+					<input type="number" name="avancement" form="interventionForm" min="0" max="100" value="<?= isset($raw['avancement']) ? htmlspecialchars($raw['avancement'], ENT_QUOTES, 'UTF-8') : '' ?>">
+				</div>
 
-        <!-- TUILE 4 — INTERVENTION -->
-        <section class="card">
-            <div class="card-content">
-                <h2>Intervention</h2>
+				<div class="input-group">
+					<label>Notes technicien</label>
+					<textarea rows="4" name="notes" form="interventionForm" ><?= isset($raw['notes']) ? htmlspecialchars($raw['notes'], ENT_QUOTES, 'UTF-8') : '' ?></textarea>
+				</div>
 
-                <div class="input-group"><label>Type d'intervention</label><input type="text"></div>
-
-                <div class="input-group">
-                    <label>Statut</label>
-                    <select>
-                        <option>Attente réponse devis</option>
-                        <option>En cours</option>
-                        <option>Terminé</option>
-                    </select>
-                </div>
-
-                <div class="input-group">
-                    <label>Avancement (%)</label>
-                    <input type="number" min="0" max="100">
-                </div>
-
-                <div class="input-group">
-                    <label>Notes technicien</label>
-                    <textarea rows="4"></textarea>
-                </div>
-
-                <div class="btn-row">
-                    <button class="btn">Enregistrer</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- TUILE 5 — DOCUMENTS -->
+				<div class="btn-row">
+					<input type="submit" name="save" value="Enregistrer" form="interventionForm" class="btn">
+				</div>
+			</div>
+		</section>
         <section class="card">
             <div class="card-content">
                 <h2>Documents</h2>
 
-                <div id="docList">
-                    <div class="doc-item">
-                        <span>facture_001.pdf</span>
-                        <button>Supprimer</button>
-                    </div>
-                    <div class="doc-item">
-                        <span>devis_001.pdf</span>
-                        <button>Supprimer</button>
-                    </div>
-                </div>
-
-                <div class="input-group" style="margin-top:16px;">
-                    <label>Ajouter un document</label>
-                    <input type="file">
-                </div>
-
-                <div class="btn-row">
-                    <button class="btn">Uploader</button>
-                </div>
+                <?php if (!empty($raw['id'])): ?>
+					<?php
+						$folder = __DIR__ . "/SOURCES/Docs/" . $raw['id'];
+						$files = [];
+						if (is_dir($folder)) {
+							$scan = scandir($folder);
+							foreach ($scan as $file) {
+								if ($file === "." || $file === "..") continue;
+								if (is_file($folder . "/" . $file)) {
+									$files[] = $file;
+								}
+							}
+						}
+					?>
+					<?php if (!empty($files)): ?>
+						<div id="docList">
+							<?php foreach ($files as $file): ?>
+								<form method="POST" class="doc-item">
+									<span><?= htmlspecialchars($file, ENT_QUOTES, 'UTF-8') ?></span>
+									<input type="hidden" name="file" value="<?= htmlspecialchars($file, ENT_QUOTES, 'UTF-8') ?>">
+									<input type="hidden" name="id" value="<?= isset($raw['id']) ? htmlspecialchars($raw['id'], ENT_QUOTES, 'UTF-8') : '' ?>">
+									<input type="submit" name="supprimer" value="Supprimer" data-file="<?= htmlspecialchars($file, ENT_QUOTES, 'UTF-8') ?>">
+								</form>
+							<?php endforeach; ?>
+						</div>
+					<?php else: ?>
+						<p>Aucun document trouvé pour cette intervention.</p>
+					<?php endif; ?>
+				<?php endif; ?>
+                <?php if (!empty($raw['id'])): ?>
+					<form method="POST" enctype="multipart/form-data">
+						<input type="hidden" name="id" value="<?= htmlspecialchars($raw['id']) ?>">
+						<div class="input-group" style="margin-top:16px;">
+							<label>Ajouter un document</label>
+							<input type="file" name="document" required>
+						</div>
+						<div class="btn-row">
+							<button class="btn" name="uploadDoc">Uploader</button>
+						</div>
+					</form>
+				<?php endif; ?>
             </div>
         </section>
-
     </div>
+		<div id="toast-container"></div>
+		</div>
+		
+		<script>
+			function showToast(message, type = "info") {
+				const container = document.getElementById('toast-container');
+				const toast = document.createElement('div');
 
-</div>
+				// Définition des styles selon le type
+				let icon = "ℹ️";
+				let border = "#ffa500"; // orange
+
+				if (type === "error") {
+					icon = "❌";
+					border = "#ff3b3b";
+				}
+				else if (type === "success") {
+					icon = "✔️";
+					border = "#2ecc71";
+				}
+
+				toast.className = 'toast';
+				toast.style.borderLeft = `4px solid ${border}`;
+
+				toast.innerHTML = `
+					<div class="toast-icon">${icon}</div>
+					<div>${message}</div>
+					<div class="toast-close" onclick="closeToast(this.parentElement)">✖</div>
+				`;
+
+				container.appendChild(toast);
+				setTimeout(() => closeToast(toast), 5000);
+			}
+
+			function closeToast(toast) {
+				toast.style.animation = 'toast-out 0.25s forwards';
+				setTimeout(() => toast.remove(), 250);
+			}
+			<?php if (!empty($errorMessage) && is_array($errorMessage)): ?>
+				<?php foreach ($errorMessage as $err): ?>
+					showToast(
+						"<?= htmlspecialchars($err->content, ENT_QUOTES, 'UTF-8') ?>",
+						<?= $err->level === ErrorLevel::ERROR ? "error" : ($err->level === ErrorLevel::SUCCESS ? "success" : "info") ?>
+					);
+				<?php endforeach; ?>
+				<?php Errors::clear(); ?>
+			<?php endif; ?>
+	</script>
+
 </body>
 </html>

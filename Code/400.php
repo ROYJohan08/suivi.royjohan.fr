@@ -1,24 +1,15 @@
 <?php
 	require_once("SOURCES/function.php");
-
-	$ADMIN_USER = "admin";
-	$ADMIN_PASS = "superpassword";
-	$error = "";
-
+    $Database =  new PDO("mysql:host=localhost;dbname=cms;charset=utf8mb4", "root", "", [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,PDO::ATTR_EMULATE_PREPARES => false]);
 	if ($_SERVER["REQUEST_METHOD"] === "POST") {
 		$user = trim($_POST["username"] ?? "");
 		$pass = trim($_POST["password"] ?? "");
 		
 
-		if ($user === $ADMIN_USER && $pass === $ADMIN_PASS) {
-			$_SESSION["admin"] = true;
-			header("Location: dashboard.php");
-			exit;
-		} else {
+		if (!admin::connect($Database,$user, $pass)) {
 			$error = "Identifiants incorrects.";
 		}
 	}
-	Errors::add("Ceci est un test", ErrorLevel::ERROR);
 	$errorMessage = Errors::get(ErrorLevel::ERROR);
 ?>
 <!DOCTYPE html>
@@ -34,7 +25,7 @@
 		<div class="page-wrapper">
 			<div class="content-center">
 				<header>
-					<img src="https://lh3.googleusercontent.com/p/AF1QipPkld8Cg3_GuIjRTeyXdn_o3wLVNIxxXWm_4f2P=s680-w680-h510"
+					<img src="SOURCES/icon.png"
 						 alt="Logo ROYJohanInfo" class="logo">
 					<div class="title-block">
 						<h1>ROYJohanInfo</h1>
@@ -44,10 +35,6 @@
 				<section class="login-card">
 					<h2 class="login-title">Connexion administrateur</h2>
 					<p class="login-subtitle">Veuillez saisir vos identifiants pour continuer.</p>
-
-					<?php if ($error): ?>
-						<div class="error"><?php echo htmlspecialchars($error); ?></div>
-					<?php endif; ?>
 
 					<form method="POST">
 						<div class="input-group">
