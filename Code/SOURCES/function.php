@@ -68,7 +68,7 @@ class admin {
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$user) {Errors::add("Utilisateur introuvable", ErrorLevel::ERROR);return false;}
         if (!password_verify($password, $user["password"])) {Errors::add("Mot de passe incorrect", ErrorLevel::ERROR);return false;}
-        $privateKey = file_get_contents(__DIR__ . "/admin.key");
+        $privateKey = file_get_contents(__DIR__ . "/SOURCES/admin.key");
         if (!$privateKey) {Errors::add("Clé privée introuvable", ErrorLevel::ERROR);return false;}
         $payload = ["username" => $user["username"],"role"     => "admin","iat"      => time(),"exp"      => time() + 3600 // 1h];
         $header = ["alg" => "RS256","typ" => "JWT"];
@@ -95,7 +95,7 @@ class admin {
         $signature = base64_decode(strtr($signatureB64, '-_', '+/'));
         if (!$header || !$payload) {Errors::add("JWT illisible", ErrorLevel::ERROR);return false;}
         if (($header["alg"] ?? null) !== "RS256") {Errors::add("Algorithme JWT invalide", ErrorLevel::ERROR);return false;}
-        $publicKey = file_get_contents(__DIR__ . "/admin.pub");
+        $publicKey = file_get_contents(__DIR__ . "/SOURCES/admin.pub");
         if (!$publicKey) {Errors::add("Clé publique introuvable", ErrorLevel::ERROR);return false;}
         $dataToVerify = "$headerB64.$payloadB64";
         $isValid = openssl_verify($dataToVerify,$signature,$publicKey,OPENSSL_ALGO_SHA256);
