@@ -1,0 +1,9 @@
+# Clés privées RSA
+admin.key
+*.key
+*.pem
+
+# Dossier sécurisé contenant les clés
+/secure/
+/keys/
+/private/

@@ -1,0 +1,210 @@
+:root {
+				--bg-color: #121212;
+				--card-color: #1E1E1E;
+				--accent-color: #03DAC6;
+				--accent-soft: rgba(3, 218, 198, 0.2);
+				--text-primary: #FFFFFF;
+				--text-secondary: #B3B3B3;
+				--divider-color: #2C2C2C;
+				--error-color: #CF6679;
+				--shadow-soft: 0 4px 12px rgba(0,0,0,0.4);
+				--radius: 12px;
+			}
+
+			* { box-sizing: border-box; }
+
+			body {
+				margin: 0;
+				padding: 0;
+				font-family: 'Roboto', sans-serif;
+				background: radial-gradient(circle at top, #1F1F1F 0, #000 60%);
+				color: var(--text-primary);
+			}
+
+			.page-wrapper {
+				min-height: 100vh;
+				display: flex;
+				flex-direction: column;
+				padding: 24px 16px;
+			}
+
+			.content-center {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+			}
+
+			header {
+				display: flex;
+				align-items: center;
+				gap: 16px;
+				justify-content: center;
+				margin-bottom: 24px;
+			}
+
+			header img.logo {
+				height: 56px;
+				width: auto;
+				border-radius: 8px;
+				box-shadow: var(--shadow-soft);
+			}
+
+			header .title-block {
+				display: flex;
+				flex-direction: column;
+			}
+
+			header .title-block h1 {
+				margin: 0;
+				font-size: 1.6rem;
+				letter-spacing: 0.05em;
+			}
+
+			header .title-block span {
+				margin-top: 4px;
+				font-size: 0.9rem;
+				color: var(--text-secondary);
+			}
+
+			.login-card {
+				width: 100%;
+				max-width: 420px;
+				background: var(--card-color);
+				border-radius: var(--radius);
+				padding: 24px 22px;
+				box-shadow: var(--shadow-soft);
+				border: 1px solid var(--divider-color);
+				animation: fadeIn 0.35s ease-out;
+			}
+
+			@keyframes fadeIn {
+				from { opacity: 0; transform: translateY(10px); }
+				to   { opacity: 1; transform: translateY(0); }
+			}
+
+			.login-title {
+				margin: 0 0 6px;
+				font-size: 1.3rem;
+				text-align: center;
+			}
+
+			.login-subtitle {
+				margin: 0 0 18px;
+				font-size: 0.9rem;
+				text-align: center;
+				color: var(--text-secondary);
+			}
+
+			.input-group {
+				margin-bottom: 14px;
+			}
+
+			.input-group label {
+				font-size: 0.85rem;
+				color: var(--text-secondary);
+			}
+
+			.input-group input {
+				width: 100%;
+				padding: 11px 12px;
+				margin-top: 6px;
+				border-radius: 8px;
+				border: 1px solid #333;
+				background: #1A1A1A;
+				color: #fff;
+				font-size: 0.95rem;
+			}
+
+			.btn-login {
+				width: 100%;
+				padding: 11px;
+				margin-top: 10px;
+				border-radius: 8px;
+				background: var(--accent-color);
+				color: #000;
+				font-weight: 600;
+				border: none;
+				cursor: pointer;
+				font-size: 0.95rem;
+				transition: background 0.2s, transform 0.1s;
+			}
+
+			.btn-login:hover {
+				background: #00bfa5;
+				transform: translateY(-1px);
+			}
+
+			.error {
+				margin-top: 10px;
+				padding: 10px;
+				border-radius: 8px;
+				background: rgba(207, 102, 121, 0.15);
+				color: var(--error-color);
+				font-size: 0.85rem;
+				text-align: center;
+				border: 1px solid rgba(207, 102, 121, 0.3);
+			}
+
+			.footer {
+				margin-top: 18px;
+				text-align: center;
+				font-size: 0.8rem;
+				color: var(--text-secondary);
+			}
+
+			@media (max-width: 480px) {
+				header {
+					flex-direction: column;
+				}
+				.login-card {
+					padding: 20px 18px;
+				}
+			}
+			.toast {
+				display: flex;
+				align-items: flex-end;
+				gap: 8px;
+				padding: 10px 12px;
+				border-radius: 8px;
+				background: #202225;
+				border-left: 4px solid #f04747;
+				color: #ffffff;
+				font-size: 0.85rem;
+				min-width: 260px;
+				max-width: 340px;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+				opacity: 0;
+				transform: translateX(20px);
+				animation: toast-in 0.25s forwards;
+			}
+
+			.toast-icon {
+				margin-top: 2px;
+				font-size: 1rem;
+			}
+
+			.toast-close {
+				margin-left: auto;
+				cursor: pointer;
+				opacity: 0.7;
+			}
+
+			.toast-close:hover {
+				opacity: 1;
+			}
+
+			@keyframes toast-in {
+				to {
+					opacity: 1;
+					transform: translateX(0);
+				}
+			}
+
+			@keyframes toast-out {
+				to {
+					opacity: 0;
+					transform: translateX(20px);
+				}
+			}
