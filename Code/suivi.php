@@ -39,8 +39,8 @@ if (isset($_GET["unlock"])) {
         http_response_code(400);
         exit;
     }
-
-    if ($json["phone"] !== $telephone_correct) {
+$r =intervention::get($Database,"",ShortID::decode($_GET["unlock"]));
+    if ($json["phone"] !== $r["telephone"]) {
         http_response_code(403);
         exit;
     }
@@ -313,7 +313,7 @@ function fake_blocks($len = 10) {
     const phone = document.getElementById("unlockInput").value.trim();
     const error = document.getElementById("unlockError");
 
-    fetch("?unlock=1&id=<?php echo $_GET['id'];?>", {
+    fetch("?unlock=<?php echo $_GET['id'];?>", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({phone})
