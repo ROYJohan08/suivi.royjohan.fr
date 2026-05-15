@@ -327,7 +327,7 @@ class ShortID {
         // On retire l’offset
         $id = $n - self::$offset;
         if ($id < 0) {
-            throw new RuntimeException("ID décodé invalide (offset incorrect ?)");
+            return -5;
         }
 
         return $id;

@@ -5,10 +5,21 @@
 	if (isset($_GET['suivi']) || isset($_POST['id'])) {
 		if(isset($_GET['suivi'])){$_SESSION['code'] = $_GET['suivi'];}
 		else{$_SESSION['code'] = $_POST['id'];}
-		$_SESSION['id'] = ShortID::decode($_SESSION['code']);
+		try{
+			$_SESSION['id'] = ShortID::decode($_SESSION['code']);
+		}
+		catch(RuntimeException $e){
+			header("Location: 404.php");
+			exit;
+		}
+		if(!$_SESSION['id'] || !is_numeric($_SESSION['id']) || $_SESSION['id']<=0){
+			header("Location: 404.php");
+			exit;
+		}
 		if(isset($_POST['phone'])){
 			$raw = getInfos($Database,$_POST['phone'],$_SESSION['id']);
 			$docs = getDocs($Database,$_POST['phone'],$_SESSION['id']);
+			if(!$raw || $raw==null){header("Location: 404.php");exit;}
 			if(!$_SESSION['Unlock']){
 				Errors::add('Téléphone incorrect',ErrorLevel::ERROR);
 			}
@@ -40,10 +51,13 @@
 		$raw['couleur'] = fake_blocks(6);
 		$raw['wallet'] = "?id=".$_SESSION['code'];
 		$docs = [];
+		header("Location: 404.php");
+		exit;
 	}
 	$errorMessage = Errors::get(ErrorLevel::ALL);
 	function getInfos($Database,$phone,$id){
 		$raw = intervention::get($Database,"",$id);
+		if(!$raw || $raw==null){header("Location: 404.php");exit;}
 		if($phone!==$raw['telephone']){
 			$raw['nom'] = fake_blocks(8);
 			$raw['adresse'] = fake_blocks(20);
