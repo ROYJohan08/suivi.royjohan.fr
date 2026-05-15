@@ -113,9 +113,14 @@
 				<div class="input-group">
 					<label>Statut</label>
 					<select form="interventionForm"  name="statut">
-						<option>Attente réponse devis</option>
-						<option>En cours</option>
-						<option>Terminé</option>
+						<option value="Rendez-vous pris">Rendez-vous</option>
+						<option value="En cours de diagnostic" >Diagnostic</option>
+						<option value="En attente réponse devis">Devis</option>
+						<option value="En attente des pièces">Pièces</option>
+						<option value="Réparation en cours">Réparation</option>
+						<option value="Attente de récupération">Récuperation</option>
+						<option value="En cours">En cours</option>
+						<option value="Terminé" >Terminé</option>
 					</select>
 				</div>
 

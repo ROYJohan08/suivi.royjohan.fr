@@ -21,6 +21,26 @@
 			$docs = getDocs($Database,"",$_SESSION['id']);
 		}
 	}
+	else{
+		$raw['nom'] = fake_blocks(8);
+		$raw['prenom'] = fake_blocks(8);
+		$raw['type'] = fake_blocks(8);
+		$raw['marque'] = fake_blocks(8);
+		$raw['modele'] = fake_blocks(8);
+		$raw['statut'] = fake_blocks(8);
+		$raw['miseAJours'] = fake_blocks(12);
+		$raw['typeIntervention'] = fake_blocks(9);
+		$raw['notes'] = fake_blocks(8);
+		$raw['avancement'] = 0;
+		$raw['adresse'] = fake_blocks(20);
+		$raw['telephone'] = fake_blocks(10);
+		$raw['email'] = fake_blocks(18);
+		$raw['serie'] = fake_blocks(7);
+		$raw['serie2'] = fake_blocks(6);
+		$raw['couleur'] = fake_blocks(6);
+		$raw['wallet'] = "?id=".$_SESSION['code'];
+		$docs = [];
+	}
 	$errorMessage = Errors::get(ErrorLevel::ALL);
 	function getInfos($Database,$phone,$id){
 		$raw = intervention::get($Database,"",$id);
@@ -135,7 +155,7 @@
                 <h2>Déverrouiller les informations</h2>
                 <p>Pour afficher vos données personnelles, veuillez saisir votre numéro de portable.</p>
                 <input type="text" name="phone" id="unlockInput" placeholder="Entrez votre numéro">
-                <input type="hidden" name="id" id="unlockInput" placeholder="<?php echo $_SESSION['code']?>">
+                <input type="hidden" name="id" id="unlockInput" placeholder="<?php if($_SESSION['code']){echo $_SESSION['code'];}?>">
                 <input type="submit" name="unlock" value="Déverrouiller">
             </form>
                 <section class="card">
@@ -157,7 +177,7 @@
                     </div>
                     <div class="info-row">
                         <span class="label">Adresse</span>
-                        <span class="value sensitive blur-sensitive" data-field="adresse">
+                        <span class="value sensitive blur-sensitive" style="text-align:right;" data-field="adresse">
                             <?php echo $raw['adresse']; ?>
                         </span>
                     </div>

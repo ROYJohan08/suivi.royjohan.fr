@@ -137,8 +137,8 @@ class admin {
 		Errors::add("User cée avec l'username : ".$username, ErrorLevel::SUCCESS);
 		return true;
 	}
-	function createDatabase(PDO $db){
-    $sqlUserBase = "
+	public static function createDatabase(PDO $db){
+    $sqlSuiviUser = "
         CREATE TABLE IF NOT EXISTS suivi_user (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(100) NOT NULL UNIQUE,
