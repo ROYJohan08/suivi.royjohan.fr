@@ -137,6 +137,56 @@ class admin {
 		Errors::add("User cée avec l'username : ".$username, ErrorLevel::SUCCESS);
 		return true;
 	}
+	function createDatabase(PDO $db){
+    $sqlUserBase = "
+        CREATE TABLE IF NOT EXISTS suivi_user (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(100) NOT NULL UNIQUE,
+            password VARCHAR(255) NOT NULL,
+            createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ";
+    $sqlSuiviInter = "
+        CREATE TABLE IF NOT EXISTS suivi_intervention (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+            -- Données client
+            nom VARCHAR(100) DEFAULT NULL,
+            prenom VARCHAR(100) DEFAULT NULL,
+            adresse VARCHAR(255) DEFAULT NULL,
+            telephone VARCHAR(20) DEFAULT NULL,
+            email VARCHAR(150) DEFAULT NULL,
+
+            -- Données techniques
+            wallet VARCHAR(255) DEFAULT NULL,
+            marque VARCHAR(100) DEFAULT NULL,
+            modele VARCHAR(100) DEFAULT NULL,
+            serie VARCHAR(100) DEFAULT NULL,
+            serie2 VARCHAR(100) DEFAULT NULL,
+            couleur VARCHAR(50) DEFAULT NULL,
+            type VARCHAR(100) DEFAULT NULL,
+
+            -- Suivi
+            avancement INT UNSIGNED DEFAULT 0,
+            statut VARCHAR(100) DEFAULT NULL,
+            statutComplet TEXT DEFAULT NULL,
+            miseAJours TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            typeIntervention VARCHAR(100) DEFAULT NULL,
+            notes TEXT DEFAULT NULL,
+
+            INDEX(statut),
+            INDEX(typeIntervention)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ";
+
+    try {
+        $db->exec($sqlSuiviUser);
+        $db->exec($sqlSuiviInter);
+    } catch (PDOException $e) {
+        die("Erreur création tables : " . $e->getMessage());
+    }
+}
+
 
 
 }
@@ -168,95 +218,73 @@ class intervention {
 		return true;
 	}
     public static function save(PDO $db, array $data): int {
-
-    if (!admin::checkToken()) {
-        Errors::add("Vous n'êtes pas administrateur", ErrorLevel::ERROR);
-        header("Location: 400.php");
-        exit;
-    }
-
-    // ID ou null
-    $id = (!empty($data['id']) && is_numeric($data['id'])) ? intval($data['id']) : null;
-
-    // Champs autorisés
-    $fields = [
-        "nom", "prenom", "adresse", "telephone", "email", "wallet",
-        "marque", "modele", "serie", "serie2", "couleur", "type",
-        "avancement", "statut", "statutComplet", "typeIntervention", "notes"
-    ];
-
-    // Construction du tableau de valeurs
-    $values = [];
-    foreach ($fields as $f) {
-        $values[$f] = $data[$f] ?? null;
-    }
-
-    // -----------------------------------
-    // UPDATE
-    // -----------------------------------
-    if ($id !== null) {
-
-        $sql = "
-            UPDATE suivi_intervention SET
-                nom = :nom,
-                prenom = :prenom,
-                adresse = :adresse,
-                telephone = :telephone,
-                email = :email,
-                wallet = :wallet,
-                marque = :marque,
-                modele = :modele,
-                serie = :serie,
-                serie2 = :serie2,
-                couleur = :couleur,
-                type = :type,
-                avancement = :avancement,
-                statut = :statut,
-                statutComplet = :statutComplet,
-                typeIntervention = :typeIntervention,
-                notes = :notes,
-                miseAJours = NOW()
-            WHERE id = :id
-        ";
-
-        $stmt = $db->prepare($sql);
-        $values['id'] = $id;
-
-        if ($stmt->execute($values)) {
-            Errors::add("Intervention mise à jour (ID : $id)", ErrorLevel::SUCCESS);
-            return $id;
-        }
-
-        Errors::add("Erreur lors de la mise à jour", ErrorLevel::ERROR);
-        return 0;
-    }
-
-    // -----------------------------------
-    // INSERT
-    // -----------------------------------
-    $sql = "
-        INSERT INTO suivi_intervention (
-            nom, prenom, adresse, telephone, email, wallet,
-            marque, modele, serie, serie2, couleur, type,
-            avancement, statut, statutComplet, typeIntervention, notes, miseAJours
-        ) VALUES (
-            :nom, :prenom, :adresse, :telephone, :email, :wallet,
-            :marque, :modele, :serie, :serie2, :couleur, :type,
-            :avancement, :statut, :statutComplet, :typeIntervention, :notes, NOW()
-        )
-    ";
-
-    $stmt = $db->prepare($sql);
-
-    if ($stmt->execute($values)) {
-        $id = (int)$db->lastInsertId();
-        Errors::add("Intervention créée (ID : $id)", ErrorLevel::SUCCESS);
-        return $id;
-    }
-
-    Errors::add("Erreur lors de la création de l'intervention", ErrorLevel::ERROR);
-    return 0;
-}
+		if (!admin::checkToken()) {
+			Errors::add("Vous n'êtes pas administrateur", ErrorLevel::ERROR);
+			header("Location: 400.php");
+			exit;
+		}
+		$id = (!empty($data['id']) && is_numeric($data['id'])) ? intval($data['id']) : null;
+		$fields = [
+			"nom", "prenom", "adresse", "telephone", "email", "wallet",
+			"marque", "modele", "serie", "serie2", "couleur", "type",
+			"avancement", "statut", "statutComplet", "typeIntervention", "notes"
+		];
+		$values = [];
+		foreach ($fields as $f) {
+			$values[$f] = $data[$f] ?? null;
+		}
+		if ($id !== null) {
+			$sql = "
+				UPDATE suivi_intervention SET
+					nom = :nom,
+					prenom = :prenom,
+					adresse = :adresse,
+					telephone = :telephone,
+					email = :email,
+					wallet = :wallet,
+					marque = :marque,
+					modele = :modele,
+					serie = :serie,
+					serie2 = :serie2,
+					couleur = :couleur,
+					type = :type,
+					avancement = :avancement,
+					statut = :statut,
+					statutComplet = :statutComplet,
+					typeIntervention = :typeIntervention,
+					notes = :notes,
+					miseAJours = NOW()
+				WHERE id = :id
+			";
+			$stmt = $db->prepare($sql);
+			$values['id'] = $id;
+			if ($stmt->execute($values)) {
+				Errors::add("Intervention mise à jour (ID : $id)", ErrorLevel::SUCCESS);
+				return $id;
+			}
+			Errors::add("Erreur lors de la mise à jour", ErrorLevel::ERROR);
+			return 0;
+		}
+		$sql = "
+			INSERT INTO suivi_intervention (
+				nom, prenom, adresse, telephone, email, wallet,
+				marque, modele, serie, serie2, couleur, type,
+				avancement, statut, statutComplet, typeIntervention, notes, miseAJours
+			) VALUES (
+				:nom, :prenom, :adresse, :telephone, :email, :wallet,
+				:marque, :modele, :serie, :serie2, :couleur, :type,
+				:avancement, :statut, :statutComplet, :typeIntervention, :notes, NOW()
+			)
+		";
+		$stmt = $db->prepare($sql);
+		if ($stmt->execute($values)) {
+			$id = (int)$db->lastInsertId();
+			Errors::add("Intervention créée (ID : $id)", ErrorLevel::SUCCESS);
+			return $id;
+		}
+		Errors::add("Erreur lors de la création de l'intervention", ErrorLevel::ERROR);
+		return 0;
+	}
 
 }
 class ShortID {
