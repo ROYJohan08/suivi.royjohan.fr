@@ -2,8 +2,8 @@
 	require_once("SOURCES/function.php");
 	$_SESSION['Unlock'] = false;
     $Database =  new PDO("mysql:host=localhost;dbname=cms;charset=utf8mb4", "root", "", [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,PDO::ATTR_EMULATE_PREPARES => false]);
-	if (isset($_GET['id']) || isset($_POST['id'])) {
-		if(isset($_GET['id'])){$_SESSION['code'] = $_GET['id'];}
+	if (isset($_GET['suivi']) || isset($_POST['id'])) {
+		if(isset($_GET['suivi'])){$_SESSION['code'] = $_GET['suivi'];}
 		else{$_SESSION['code'] = $_POST['id'];}
 		$_SESSION['id'] = ShortID::decode($_SESSION['code']);
 		if(isset($_POST['phone'])){
