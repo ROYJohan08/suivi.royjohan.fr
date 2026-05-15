@@ -4,13 +4,13 @@
 	if ($_SERVER["REQUEST_METHOD"] === "POST") {
 		$user = trim($_POST["username"] ?? "");
 		$pass = trim($_POST["password"] ?? "");
-		
 
-		if (!admin::connect($Database,$user, $pass)) {
-			$error = "Identifiants incorrects.";
+		if (admin::connect($Database,$user, $pass)) {
+			header("Location: 409.php");
+			exit;
 		}
 	}
-	$errorMessage = Errors::get(ErrorLevel::ERROR);
+	$errorMessage = Errors::get(ErrorLevel::ALL);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -59,24 +59,49 @@
 		</div>
 		
 		<script>
-			function showToast(message) {
+			function showToast(message, type = "error") {
 				const container = document.getElementById('toast-container');
 				const toast = document.createElement('div');
 				toast.className = 'toast';
-				toast.innerHTML = `<div class="toast-icon">⚠️</div><div>${message}</div><div class="toast-close" onclick="closeToast(this.parentElement)">✖</div>`;
+
+				let icon = "ℹ️";
+				let border = "#ffa500";
+
+				if (type === "error") {
+					icon = "❌";
+					border = "#ff3b3b";
+				} else if (type === "success") {
+					icon = "✔️";
+					border = "#2ecc71";
+				}
+
+				toast.style.borderLeft = `4px solid ${border}`;
+
+				toast.innerHTML = `
+					<div class="toast-icon">${icon}</div>
+					<div>${message}</div>
+					<div class="toast-close" onclick="closeToast(this.parentElement)">✖</div>
+				`;
+
 				container.appendChild(toast);
 				setTimeout(() => closeToast(toast), 5000);
 			}
+
 			function closeToast(toast) {
 				toast.style.animation = 'toast-out 0.25s forwards';
 				setTimeout(() => toast.remove(), 250);
 			}
+
 			<?php if (!empty($errorMessage) && is_array($errorMessage)): ?>
 				<?php foreach ($errorMessage as $err): ?>
-					showToast("<?= htmlspecialchars($err->content, ENT_QUOTES, 'UTF-8') ?>");
+					showToast(
+						"<?= htmlspecialchars($err->content, ENT_QUOTES, 'UTF-8') ?>",
+						"<?= $err->level === ErrorLevel::ERROR ? "error" : ($err->level === ErrorLevel::SUCCESS ? "success" : "info") ?>"
+					);
 				<?php endforeach; ?>
-				 <?php Errors::clear(); ?>
+				<?php Errors::clear(); ?>
 			<?php endif; ?>
-		</script>
+			</script>
+
 	</body>
 </html>

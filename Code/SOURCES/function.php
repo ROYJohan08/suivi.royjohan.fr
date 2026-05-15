@@ -63,27 +63,19 @@ class Errors {
                 $a->level->value <=> $b->level->value
         );
     }
-	public static function save(string $content, string $level = "error"): void{
+	public static function save(string $content, ErrorLevel $level = ErrorLevel::ERROR): void {
 		$content = trim(strip_tags($content));
 		if (strlen($content) < 2) return;
-		$level = strtolower($level);
-		if (!in_array($level, ["error", "info", "success"])) {
-			$level = "info";
-		}
-		if (!isset($_SESSION['errors'])) {
-			$_SESSION['errors'] = [];
-		}
-		$_SESSION['errors'][] = [
-			"content" => $content,
-			"level"   => $level,
-			"time"    => time()
-		];
+		if (!isset($_SESSION['errors'])) {$_SESSION['errors'] = [];}
+		$_SESSION['errors'][] = ["content" => $content,"level"   => $level->value];
 	}
-	public static function load(): void{
-		if (!isset($_SESSION['errors'])) {
-			$_SESSION['errors'] = [];
+
+	public static function load(): void {
+		if (!isset($_SESSION['errors']) || empty($_SESSION['errors'])) {return;}
+		foreach ($_SESSION['errors'] as $er) {
+			Errors::add($er['content'],ErrorLevel::from($er['level']));
 		}
-		self::$errors = array_merge(self::$errors, $_SESSION['errors']);
+		$_SESSION['errors'] = [];
 	}
 }
 
@@ -110,8 +102,6 @@ class admin {
         $_SESSION["admin_username"] = $user["username"];
         $_SESSION["admin_token"] = $jwt;
 		Errors::save("Connexion réussie", ErrorLevel::SUCCESS);
-		header("Location: 409.php");
-		exit;
         return true;
     }
     public static function checkToken(): bool {
@@ -179,7 +169,6 @@ class intervention {
 	}
     public static function save(PDO $db, array $data): int {
 
-    // Vérification admin
     if (!admin::checkToken()) {
         Errors::add("Vous n'êtes pas administrateur", ErrorLevel::ERROR);
         header("Location: 400.php");

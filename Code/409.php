@@ -89,6 +89,7 @@
 				<div class="input-group"><label>Adresse</label><input type="text" name="adresse" form="interventionForm" value="<?= isset($raw['adresse']) ? htmlspecialchars($raw['adresse'], ENT_QUOTES, 'UTF-8') : '' ?>"></div>
 				<div class="input-group"><label>Téléphone</label><input type="text" name="telephone" form="interventionForm" value="<?= isset($raw['telephone']) ? htmlspecialchars($raw['telephone'], ENT_QUOTES, 'UTF-8') : '' ?>"></div>
 				<div class="input-group"><label>Email</label><input type="text" name="email" form="interventionForm" value="<?= isset($raw['email']) ? htmlspecialchars($raw['email'], ENT_QUOTES, 'UTF-8') : '' ?>"></div>
+				<div class="input-group"><label>Wallet</label><input type="text" name="wallet" form="interventionForm" value="<?= isset($raw['wallet']) ? htmlspecialchars($raw['wallet'], ENT_QUOTES, 'UTF-8') : '' ?>"></div>
 			</div>
 		</section>
 		<section class="card">
@@ -183,52 +184,51 @@
     </div>
 		<div id="toast-container"></div>
 		</div>
-		
 		<script>
-			function showToast(message, type = "info") {
-				const container = document.getElementById('toast-container');
-				const toast = document.createElement('div');
+function showToast(message, type = "error") {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
 
-				// Définition des styles selon le type
-				let icon = "ℹ️";
-				let border = "#ffa500"; // orange
+    let icon = "ℹ️";
+    let border = "#ffa500";
 
-				if (type === "error") {
-					icon = "❌";
-					border = "#ff3b3b";
-				}
-				else if (type === "success") {
-					icon = "✔️";
-					border = "#2ecc71";
-				}
+    if (type === "error") {
+        icon = "❌";
+        border = "#ff3b3b";
+    } else if (type === "success") {
+        icon = "✔️";
+        border = "#2ecc71";
+    }
 
-				toast.className = 'toast';
-				toast.style.borderLeft = `4px solid ${border}`;
+    toast.style.borderLeft = `4px solid ${border}`;
 
-				toast.innerHTML = `
-					<div class="toast-icon">${icon}</div>
-					<div>${message}</div>
-					<div class="toast-close" onclick="closeToast(this.parentElement)">✖</div>
-				`;
+    toast.innerHTML = `
+        <div class="toast-icon">${icon}</div>
+        <div>${message}</div>
+        <div class="toast-close" onclick="closeToast(this.parentElement)">✖</div>
+    `;
 
-				container.appendChild(toast);
-				setTimeout(() => closeToast(toast), 5000);
-			}
+    container.appendChild(toast);
+    setTimeout(() => closeToast(toast), 5000);
+}
 
-			function closeToast(toast) {
-				toast.style.animation = 'toast-out 0.25s forwards';
-				setTimeout(() => toast.remove(), 250);
-			}
-			<?php if (!empty($errorMessage) && is_array($errorMessage)): ?>
-				<?php foreach ($errorMessage as $err): ?>
-					showToast(
-						"<?= htmlspecialchars($err->content, ENT_QUOTES, 'UTF-8') ?>",
-						<?= $err->level === ErrorLevel::ERROR ? "error" : ($err->level === ErrorLevel::SUCCESS ? "success" : "info") ?>
-					);
-				<?php endforeach; ?>
-				<?php Errors::clear(); ?>
-			<?php endif; ?>
-	</script>
+function closeToast(toast) {
+    toast.style.animation = 'toast-out 0.25s forwards';
+    setTimeout(() => toast.remove(), 250);
+}
+
+<?php if (!empty($errorMessage) && is_array($errorMessage)): ?>
+    <?php foreach ($errorMessage as $err): ?>
+        showToast(
+            "<?= htmlspecialchars($err->content, ENT_QUOTES, 'UTF-8') ?>",
+            "<?= $err->level === ErrorLevel::ERROR ? "error" : ($err->level === ErrorLevel::SUCCESS ? "success" : "info") ?>"
+        );
+    <?php endforeach; ?>
+    <?php Errors::clear(); ?>
+<?php endif; ?>
+</script>
+
 
 </body>
 </html>
